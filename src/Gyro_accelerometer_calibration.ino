@@ -1,5 +1,12 @@
 #include <Wire.h>
 
+// MPU9250 I2C address (AD0 low = 0x68, AD0 high = 0x69)
+const uint8_t MPU9250_ADDR = 0x68;
+
+// Full-scale settings to match current scale factors
+const uint8_t GYRO_FS_500DPS = 0x08;  // 500 dps -> 65.5 LSB/(deg/s)
+const uint8_t ACC_FS_8G = 0x10;       // 8 g -> 4096 LSB/g
+
 int16_t AccXLSB, AccYLSB, AccZLSB;
 int16_t GyroX, GyroY, GyroZ;
 float AccX, AccY, AccZ;
@@ -15,10 +22,20 @@ void setup() {
   Serial.begin(115200);
   Wire.begin();
   
-  // Initialize the MPU6050 sensor
-  Wire.beginTransmission(0x68); // MPU6050 address
+  // Initialize the MPU9250 sensor
+  Wire.beginTransmission(MPU9250_ADDR); // MPU9250 address
   Wire.write(0x6B); // Power management register
-  Wire.write(0x00); // Wake up MPU6050
+  Wire.write(0x00); // Wake up MPU9250
+  Wire.endTransmission(true);
+
+  Wire.beginTransmission(MPU9250_ADDR);
+  Wire.write(0x1B);
+  Wire.write(GYRO_FS_500DPS);
+  Wire.endTransmission(true);
+
+  Wire.beginTransmission(MPU9250_ADDR);
+  Wire.write(0x1C);
+  Wire.write(ACC_FS_8G);
   Wire.endTransmission(true);
   
   delay(100);
@@ -109,36 +126,36 @@ AccZ -= AccZCalibration;
 }
 
 void gyro_signals(void) {
-  Wire.beginTransmission(0x68);
+  Wire.beginTransmission(MPU9250_ADDR);
   Wire.write(0x1A); // Set accelerometer filters
   Wire.write(0x05);
   Wire.endTransmission();
   
-  Wire.beginTransmission(0x68);
+  Wire.beginTransmission(MPU9250_ADDR);
   Wire.write(0x1C); // Set gyroscope filters
-  Wire.write(0x10);
+  Wire.write(ACC_FS_8G);
   Wire.endTransmission();
   
-  Wire.beginTransmission(0x68);
+  Wire.beginTransmission(MPU9250_ADDR);
   Wire.write(0x3B); // Start reading accelerometer data
   Wire.endTransmission();
   
-  Wire.requestFrom(0x68, 6); // Request 6 bytes of accelerometer data
+  Wire.requestFrom(MPU9250_ADDR, 6); // Request 6 bytes of accelerometer data
   AccXLSB = Wire.read() << 8 | Wire.read();
   AccYLSB = Wire.read() << 8 | Wire.read();
   AccZLSB = Wire.read() << 8 | Wire.read();
 
   // Set gyroscope data to read
-  Wire.beginTransmission(0x68);
+  Wire.beginTransmission(MPU9250_ADDR);
   Wire.write(0x1B); // Set gyroscope settings
-  Wire.write(0x08);
+  Wire.write(GYRO_FS_500DPS);
   Wire.endTransmission();
   
-  Wire.beginTransmission(0x68);
+  Wire.beginTransmission(MPU9250_ADDR);
   Wire.write(0x43); // Read gyroscope data
   Wire.endTransmission();
   
-  Wire.requestFrom(0x68, 6); // Request 6 bytes of gyroscope data
+  Wire.requestFrom(MPU9250_ADDR, 6); // Request 6 bytes of gyroscope data
   GyroX = Wire.read() << 8 | Wire.read();
   GyroY = Wire.read() << 8 | Wire.read();
   GyroZ = Wire.read() << 8 | Wire.read();

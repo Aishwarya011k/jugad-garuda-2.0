@@ -11,6 +11,13 @@
 #include <Wire.h>
 #include <ESP32Servo.h> // Change to the standard Servo library for ESP32
 
+// MPU9250 I2C address (AD0 low = 0x68, AD0 high = 0x69)
+const uint8_t MPU9250_ADDR = 0x68;
+
+// Full-scale settings to match current scale factors
+const uint8_t GYRO_FS_500DPS = 0x08;  // 500 dps -> 65.5 LSB/(deg/s)
+const uint8_t ACC_FS_8G = 0x10;       // 8 g -> 4096 LSB/g
+
 
 // REPLACE WITH YOUR NETWORK CREDENTIALS
 //COnnect your PC/mobile to this wifi and open the IP address from the serial monitor in your browser.
@@ -156,29 +163,29 @@ if (digitalRead(channel_6_pin)) { if (last_channel_6 == 0) { last_channel_6 = 1;
 
 void gyro_signals(void)
 {
-Wire.beginTransmission(0x68);
+Wire.beginTransmission(MPU9250_ADDR);
   Wire.write(0x1A);
   Wire.write(0x05);
   Wire.endTransmission();
-  Wire.beginTransmission(0x68);
+  Wire.beginTransmission(MPU9250_ADDR);
   Wire.write(0x1C);
-  Wire.write(0x10);
+  Wire.write(ACC_FS_8G);
   Wire.endTransmission();
-  Wire.beginTransmission(0x68);
+  Wire.beginTransmission(MPU9250_ADDR);
   Wire.write(0x3B);
   Wire.endTransmission(); 
-  Wire.requestFrom(0x68,6);
+  Wire.requestFrom(MPU9250_ADDR,6);
   int16_t AccXLSB = Wire.read() << 8 | Wire.read();
   int16_t AccYLSB = Wire.read() << 8 | Wire.read();
   int16_t AccZLSB = Wire.read() << 8 | Wire.read();
-  Wire.beginTransmission(0x68);
+  Wire.beginTransmission(MPU9250_ADDR);
   Wire.write(0x1B); 
-  Wire.write(0x8);
+  Wire.write(GYRO_FS_500DPS);
   Wire.endTransmission();                                                   
-  Wire.beginTransmission(0x68);
+  Wire.beginTransmission(MPU9250_ADDR);
   Wire.write(0x43);
   Wire.endTransmission();
-  Wire.requestFrom(0x68,6);
+  Wire.requestFrom(MPU9250_ADDR,6);
   int16_t GyroX=Wire.read()<<8 | Wire.read();
   int16_t GyroY=Wire.read()<<8 | Wire.read();
   int16_t GyroZ=Wire.read()<<8 | Wire.read();
@@ -501,9 +508,19 @@ int led_time=100;
   Wire.setClock(400000);
   Wire.begin();
   delay(250);
-  Wire.beginTransmission(0x68);
+  Wire.beginTransmission(MPU9250_ADDR);
   Wire.write(0x6B);
   Wire.write(0x00);
+  Wire.endTransmission();
+
+  Wire.beginTransmission(MPU9250_ADDR);
+  Wire.write(0x1B);
+  Wire.write(GYRO_FS_500DPS);
+  Wire.endTransmission();
+
+  Wire.beginTransmission(MPU9250_ADDR);
+  Wire.write(0x1C);
+  Wire.write(ACC_FS_8G);
   Wire.endTransmission();
 
  	ESP32PWM::allocateTimer(0);
@@ -581,29 +598,29 @@ t = readFile(SPIFFS, "/tc.txt").toFloat();
 
 
   //enter your loop code here
-Wire.beginTransmission(0x68);
+Wire.beginTransmission(MPU9250_ADDR);
   Wire.write(0x1A);
   Wire.write(0x05);
   Wire.endTransmission();
-  Wire.beginTransmission(0x68);
+  Wire.beginTransmission(MPU9250_ADDR);
   Wire.write(0x1C);
-  Wire.write(0x10);
+  Wire.write(ACC_FS_8G);
   Wire.endTransmission();
-  Wire.beginTransmission(0x68);
+  Wire.beginTransmission(MPU9250_ADDR);
   Wire.write(0x3B);
   Wire.endTransmission(); 
-  Wire.requestFrom(0x68,6);
+  Wire.requestFrom(MPU9250_ADDR,6);
   int16_t AccXLSB = Wire.read() << 8 | Wire.read();
   int16_t AccYLSB = Wire.read() << 8 | Wire.read();
   int16_t AccZLSB = Wire.read() << 8 | Wire.read();
-  Wire.beginTransmission(0x68);
+  Wire.beginTransmission(MPU9250_ADDR);
   Wire.write(0x1B); 
-  Wire.write(0x8);
+  Wire.write(GYRO_FS_500DPS);
   Wire.endTransmission();                                                   
-  Wire.beginTransmission(0x68);
+  Wire.beginTransmission(MPU9250_ADDR);
   Wire.write(0x43);
   Wire.endTransmission();
-  Wire.requestFrom(0x68,6);
+  Wire.requestFrom(MPU9250_ADDR,6);
   int16_t GyroX=Wire.read()<<8 | Wire.read();
   int16_t GyroY=Wire.read()<<8 | Wire.read();
   int16_t GyroZ=Wire.read()<<8 | Wire.read();
